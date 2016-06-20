@@ -23,11 +23,17 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
-    char buffer[256];
+    short width = 512;
+    short height = 424;
+    int buffer_len = width * height * 5;
+    char buffer[buffer_len];
+    
     if (argc < 3) {
         fprintf(stderr,"usage %s hostname port\n", argv[0]);
         exit(0);
     }
+    
+    // initialize socket
     portno = atoi(argv[2]);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
@@ -37,6 +43,7 @@ int main(int argc, char *argv[])
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
     }
+    printf("Host found.\n");
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr,
@@ -45,14 +52,23 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
         error("ERROR connecting");
-    printf("Please enter the message: ");
-    bzero(buffer,256);
-    fgets(buffer,255,stdin);
-    n = write(sockfd,buffer,strlen(buffer));
+    printf("Connect succeeded.\n");
+    
+    // send images to server
+    bzero(buffer,buffer_len);
+    buffer[0] = 'a';
+    buffer[1] = 'b';
+    buffer[40000] = 'c';
+    buffer[100001] = 'd';
+    buffer[width * height * 5 - 10] = 'x';
+    printf("Sending..., Buffer Length: %d\n", buffer_len);
+    n = write(sockfd,buffer,buffer_len);
     if (n < 0)
         error("ERROR writing to socket");
-    bzero(buffer,256);
-    n = read(sockfd,buffer,255);
+    
+    // read message from server
+    bzero(buffer,buffer_len);
+    n = read(sockfd,buffer,buffer_len-1);
     if (n < 0)
         error("ERROR reading from socket");
     printf("%s\n",buffer);

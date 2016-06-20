@@ -4,6 +4,8 @@ DEBUG = -g
 CFLAGS = -Wall -c $(DEBUG)
 LFLAGS = -Wall $(DEBUG)
 
+all: client server
+
 client.o: client.cpp
 	$(CC) $(CFLAGS) client.cpp
 
