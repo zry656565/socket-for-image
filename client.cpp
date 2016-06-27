@@ -25,7 +25,9 @@ int main(int argc, char *argv[])
 
     short width = 512;
     short height = 424;
-    int buffer_len = width * height * 5;
+    int data_len = width * height * 5;
+    char data[data_len];
+    int buffer_len = 50000;
     char buffer[buffer_len];
     
     if (argc < 3) {
@@ -54,24 +56,26 @@ int main(int argc, char *argv[])
         error("ERROR connecting");
     printf("Connect succeeded.\n");
     
-    // send images to server
-    bzero(buffer,buffer_len);
-    buffer[0] = 'a';
-    buffer[1] = 'b';
-    buffer[40000] = 'c';
-    buffer[100001] = 'd';
-    buffer[width * height * 5 - 10] = 'x';
-    printf("Sending..., Buffer Length: %d\n", buffer_len);
-    n = write(sockfd,buffer,buffer_len);
-    if (n < 0)
-        error("ERROR writing to socket");
+    // receive images from server
+    int len = 0;
+    n = 0;
+    bzero(data, sizeof(data));
+    bzero(buffer, sizeof(buffer));
+    while ((n = read(sockfd, buffer, buffer_len)) > 0) {
+        memcpy(&data[len], buffer, n);
+        len += n;
+        printf("Read %d bytes, totally %d bytes...\n", n, len);
+        bzero(buffer,sizeof(buffer));
+        if (len >= data_len) break;
+    }
+    if (n < 0) error("ERROR reading from socket");
     
-    // read message from server
-    bzero(buffer,buffer_len);
-    n = read(sockfd,buffer,buffer_len-1);
-    if (n < 0)
-        error("ERROR reading from socket");
-    printf("%s\n",buffer);
+    // show the message from server
+    int loc[5] = {0, 1, 40000, 100001, width * height * 5 - 10};
+    for (int i = 0; i < 5; i++) {
+        printf("Received: The %dth char is: %c, from %d bytes.\n", loc[i], data[loc[i]], len);
+    }
+    
     close(sockfd);
     return 0;
 }
