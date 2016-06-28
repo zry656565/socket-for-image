@@ -22,8 +22,8 @@ int main(int argc, char *argv[])
 {
     int sockfd, newsockfd, portno;
     socklen_t clilen;
-    short width = 512;
-    short height = 424;
+    short width = 960;
+    short height = 540;
     int buffer_len = width * height * 5;
     char buffer[buffer_len];
     struct sockaddr_in serv_addr, cli_addr;
@@ -56,16 +56,24 @@ int main(int argc, char *argv[])
     if (newsockfd < 0)
         error("ERROR on accept");
 
-    bzero(buffer,buffer_len);
-    buffer[0] = 'a';
-    buffer[1] = 'b';
-    buffer[40000] = 'c';
-    buffer[100001] = 'd';
-    buffer[width * height * 5 - 10] = 'x';
-    printf("Sending..., Buffer Length: %d\n", buffer_len);
-    n = write(newsockfd,buffer,buffer_len);
-    if (n < 0)
-        error("ERROR writing to socket");
+    while (true) {
+        bzero(buffer,buffer_len);
+        buffer[0] = 'a';
+        buffer[1] = 'b';
+        buffer[40000] = 'c';
+        buffer[100001] = 'd';
+        buffer[width * height * 5 - 10] = 'x';
+        printf("Sending..., Buffer Length: %d\n", buffer_len);
+        n = write(newsockfd,buffer,buffer_len);
+        if (n < 0)
+            error("ERROR writing to socket");
+        
+        bzero(buffer,buffer_len);
+        n = read(newsockfd,buffer,buffer_len-1);
+        if (n < 0)
+            error("ERROR reading from socket");
+        printf("%s\n",buffer);
+    }
     
     close(newsockfd);
     close(sockfd);
